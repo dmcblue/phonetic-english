@@ -69,3 +69,5 @@ One does not need to differentiate between `θ` and `ɸ` in every day English, o
 Inter-language utility is not directly addressed by this project.
 Instead, it is indirectly addressed by making spelling consistent.
 Knowing a linguistic context is English should be enough to translate phonology easily and quickly.
+
+http://svn.code.sf.net/p/cmusphinx/code/trunk/cmudict/sphinxdict/cmudict.0.7a_SPHINX_40

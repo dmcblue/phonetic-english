@@ -1,0 +1,128 @@
+{
+	"version": "0.1.0",
+	
+	"requirements": [{
+		"name": "git",
+		"command": "git"
+	}, {
+		"name": "haxe",
+		"command": "haxe",
+		"testArgument": "-version"
+	}, {
+		"name": "haxelib",
+		"command": "haxelib",
+		"testArgument": "list"
+	}, {
+		"name": "copy",
+		"command": "cp",
+		"testArgument": "-version",
+		"windows": {
+			"command": "copy",
+			"testArgument": "/?"
+		}
+	}],
+		
+	"tasks": [{
+		"name": "init:git",
+		"description": "Initializes git submodules",
+		"groups": [{
+			"name": "init",
+			"rank": 1
+		}],
+		"command": "git",
+		"arguments": ["submodule","init"]
+	},{
+		"name": "init:code",
+		"description": "Fetches dependencies",
+		"groups": [{
+			"name": "init",
+			"rank": 2
+		}],
+		"command": "git",
+		"arguments": ["submodule","update"]
+	},{
+		"name": "init:libs",
+		"description": "Installs haxelib dependencies",
+		"groups": [{
+			"name": "init",
+			"rank": 3
+		}],
+		"command": "haxelib",
+		"arguments": [
+			"install",
+			"hxcpp",
+			"thx.csv",
+			"utest"
+		],
+		"windows": {
+			"arguments": [
+				"install",
+				"hxcpp",
+				"thx.csv",
+				"utest",
+				"minimingw"
+			]
+		}
+	},
+	
+	{
+		"name": "build:cpp",
+		"description": "Transpiles Haxe to C++",
+		"groups": [{
+			"name": "build",
+			"rank": 1
+		}],
+		"command": "haxe",
+		"arguments": [
+			"-lib", "thx.csv",
+			"-cp", "src",
+			"-cp", "common/src",
+			"--cpp", "bin/cpp",
+			"-main", "dmcblue.phoneticEnglish.Main"
+		]
+	},{
+		"name": "build:copy",
+		"description": "Copies the executable into the /bin root and renames",
+		"groups": [{
+			"name": "build",
+			"rank": 2
+		}],
+		"command": "cp",
+		"arguments": ["bin/cpp/Main", "bin/phoneng"],
+		"platformSpecifics": {
+			"windows": {
+				"arguments": ["bin\\cpp\\Main.exe",  "/B", "bin\\phoneng.exe",  "/B"]
+			}
+		}
+	},
+
+	{
+		"name": "test:common",
+		"description": "Runs test for interealmGames.common dependency",
+		"groups": [{
+			"name": "test",
+			"rank": 1
+		}],
+		"command": "haxe",
+		"arguments": [
+            "-lib", "utest",
+			"-cp", "common/src",
+			"-main", "interealmGames.common.Test",
+			"--interp"
+		]
+	}, {
+		"name": "test:app",
+		"description": "Runs test for dmcblue.phoneticEnglish",
+		"groups": [{
+			"name": "test",
+			"rank": 2
+		}],
+		"command": "haxe",
+		"arguments": [
+            "-lib", "utest",
+			"-cp", "src",
+			"-main", "dmcblue.phoneticEnglish.Test",
+			"--interp"
+		]
+	}]
+}
