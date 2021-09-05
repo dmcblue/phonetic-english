@@ -15,7 +15,7 @@
 	}, {
 		"name": "copy",
 		"command": "cp",
-		"testArgument": "-version",
+		"testArgument": "--version",
 		"windows": {
 			"command": "copy",
 			"testArgument": "/?"
@@ -41,28 +41,70 @@
 		"command": "git",
 		"arguments": ["submodule","update"]
 	},{
-		"name": "init:libs",
-		"description": "Installs haxelib dependencies",
+		"name": "init:libs:minimingw",
+		"description": "Installs package minimingw",
 		"groups": [{
 			"name": "init",
+			"rank": 3
+		}, {
+			"name": "init:lib",
+			"rank": 1
+		}],
+		"command": "haxelib",
+		"arguments": [
+			"list"
+		],
+		"windows": {
+			"arguments": [
+				"install",
+				"minimingw"
+			]
+		}
+	},{
+		"name": "init:libs:hxcpp",
+		"description": "Installs package hxcpp",
+		"groups": [{
+			"name": "init",
+			"rank": 4
+		}, {
+			"name": "init:lib",
+			"rank": 2
+		}],
+		"command": "haxelib",
+		"arguments": [
+			"install",
+			"hxcpp"
+		]
+	},{
+		"name": "init:libs:thx.csv",
+		"description": "Installs package thx.csv",
+		"groups": [{
+			"name": "init",
+			"rank": 5
+		}, {
+			"name": "init:lib",
 			"rank": 3
 		}],
 		"command": "haxelib",
 		"arguments": [
 			"install",
-			"hxcpp",
-			"thx.csv",
+			"thx.csv"
+		]
+	},{
+		"name": "init:libs:utest",
+		"description": "Installs package utest",
+		"groups": [{
+			"name": "init",
+			"rank": 6
+		}, {
+			"name": "init:lib",
+			"rank": 4
+		}],
+		"command": "haxelib",
+		"arguments": [
+			"install",
 			"utest"
-		],
-		"windows": {
-			"arguments": [
-				"install",
-				"hxcpp",
-				"thx.csv",
-				"utest",
-				"minimingw"
-			]
-		}
+		]
 	},
 	
 	{

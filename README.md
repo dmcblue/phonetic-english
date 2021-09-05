@@ -71,3 +71,26 @@ Instead, it is indirectly addressed by making spelling consistent.
 Knowing a linguistic context is English should be enough to translate phonology easily and quickly.
 
 http://svn.code.sf.net/p/cmusphinx/code/trunk/cmudict/sphinxdict/cmudict.0.7a_SPHINX_40
+
+## Development
+
+### Setup
+
+Requires the [OpenTask](https://github.com/interealm-games/opentask) executable.
+
+Check for missing system dependencies:
+```
+opentask requirements test
+```
+
+Then run setup scripts:
+```
+opentask rungroup init
+```
+
+### Build
+
+```
+opentask rungroup build
+```
+which will place a new binary at `bin/phoneng`

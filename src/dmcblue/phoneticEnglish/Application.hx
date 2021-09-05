@@ -194,8 +194,9 @@ class Application
 	public function loadTsvFile(path:String):Null<Dynamic> {
 		
 		var object = null;
+		var content:String = "";
 		try {
-			var content:String = sys.io.File.getContent(path);
+			content = sys.io.File.getContent(path);
 			trace(content);
 			object = Tsv.decode(content);
 		} catch (e:Any) {
