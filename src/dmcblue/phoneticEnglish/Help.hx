@@ -37,12 +37,12 @@ Input/Output Types:
 		}
 		var helpText = StringTools.format(Help.HELP_TEXT, [
       executableName,
-      Application.OPTION_VERSION,
       Application.OPTION_VERSION_SHORT,
-      Application.OPTION_HELP,
+      Application.OPTION_VERSION,
       Application.OPTION_HELP_SHORT,
-      Application.OPTION_CONFIG,
+      Application.OPTION_HELP,
       Application.OPTION_CONFIG_SHORT,
+      Application.OPTION_CONFIG,
       Application.TYPE_ARPA1,
       Application.TYPE_ARPA2,
       Application.TYPE_GA,

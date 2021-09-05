@@ -19,7 +19,9 @@ import dmcblue.phoneticEnglish.ConfigurationObject;
 import dmcblue.phoneticEnglish.errors.BaseError;
 import dmcblue.phoneticEnglish.errors.JsonParsingError;
 import dmcblue.phoneticEnglish.errors.InvalidNumberOfParametersError;
-import thx.csv.Tsv;
+// import thx.csv.Tsv;
+import dmcblue.phoneticEnglish.Tsv;
+import dmcblue.phoneticEnglish.Converter;
 // import interealmGames.opentask.Help;MissingParametersError
 // import interealmGames.opentask.ProgramInformation;
 // import interealmGames.opentask.Log;
@@ -88,6 +90,7 @@ class Application
 			var inputType = arguments[1];
 			var outputType = arguments[2];
 			var input = arguments[3];
+			var output:String = input;
 			
 			if (Application.TYPES.indexOf(inputType) == -1) {
 				throw new InvalidTypeError(inputType);
@@ -103,13 +106,30 @@ class Application
 					// convert GA to ARPA
 					// Get dictionary
 					// convert from dictionary
-					var c = this.loadTsvFile("/home/dmcblue/repos/phonetic-english/mappings/dict.tsv");
-					trace(c);
+					var tsv = new Tsv(['word', 'arpa']);
+					tsv.load(configuration.dictPath);
+					var converter = Converter.fromTsv(tsv, 'word', 'arpa');
+					var mid = converter.convert(input);
 					// convert ARPA to IPA
+					var tsv = new Tsv(['arpa', 'ipa']);
+					tsv.load(configuration.arpa2Path);
+					var converter = Converter.fromTsv(tsv, 'arpa', 'ipa');
+					var mid2 = "";
+					for(letter in mid.split(" ")) {
+						mid2 += converter.convert2(letter) + " ";
+					}
+					// convert IPA to Phon
+					var tsv = new Tsv(['phon', 'ipa', 'example']);
+					tsv.load(configuration.phonPath);
+					var converter = Converter.fromTsv(tsv, 'ipa', 'phon');
+					output = "";
+					for(letter in mid2.split(" ")) {
+						output += converter.convert2(letter);
+					}
 				}
 			}
 
-			var output = input;
+			// var output = input;
 			if (outputType != Application.TYPE_IPA) {
 				// convert
 			}
@@ -129,7 +149,7 @@ class Application
 		if (error != null) {
 			Sys.println(error.toString());
 			
-			if (Std.is(error, InvalidNumberOfParametersError)) {
+			if (Std.isOfType(error, InvalidNumberOfParametersError)) {
 				Help.display();
 			}
 		}
@@ -144,24 +164,25 @@ class Application
 	public function getConfiguration(options:OptionSet):Configuration {
 		var configurationPath = "~/.phoneng.json";
 
-		if (options.hasShortOption('c') || options.hasLongOption('config')) {
-			if (options.hasShortOption('c') && options.getShortValues('c').length > 0) {
-				configurationPath = options.getShortValues('c')[0];
-			} else if (options.hasLongOption('config') && options.getLongValues('config').length > 0) {
-				configurationPath = options.getLongValues('config')[0];
+		if (options.hasShortOption(Application.OPTION_CONFIG_SHORT) || options.hasLongOption(Application.OPTION_CONFIG)) {
+			if (options.hasShortOption(Application.OPTION_CONFIG_SHORT) && options.getShortValues(Application.OPTION_CONFIG_SHORT).length > 0) {
+				configurationPath = options.getShortValues(Application.OPTION_CONFIG_SHORT)[0];
+			} else if (options.hasLongOption(Application.OPTION_CONFIG) && options.getLongValues(Application.OPTION_CONFIG).length > 0) {
+				configurationPath = options.getLongValues(Application.OPTION_CONFIG)[0];
 			}
 		}
-		
+
 		var configurationObject:ConfigurationObject;
 		try{
 			configurationObject = cast this.loadJsonFile(configurationPath);
-		} catch (e:BaseError) {
+		} catch (error:BaseError) {
 			// var error = new InvalidLocalConfigurationError(configurationPath);
 			// error.causedBy(e);
 			// throw error;
 			configurationObject = {version: Application.VERSION};
 		}
-		var configuration:Configuration = new Configuration({version: Application.VERSION});
+
+		var configuration:Configuration = new Configuration(configurationObject);
 
 		return configuration;
 	}
@@ -191,20 +212,18 @@ class Application
 	 * @return	Dynamic Object with the contents.
 	 * @throws	JsonParsingError
 	 */
-	public function loadTsvFile(path:String):Null<Dynamic> {
+	// public function loadTsvFile(path:String):Null<Array<Array<String>>> {
 		
-		var object = null;
-		var content:String = "";
-		try {
-			content = sys.io.File.getContent(path);
-			trace(content);
-			object = Tsv.decode(content);
-		} catch (e:Any) {
-			//throw new JsonParsingError(path, e);
-			trace(e);
-			throw e;
-		}
+	// 	var object:Null<Array<Array<String>>> = null;
+	// 	var content:String = "";
+	// 	try {
+	// 		content = sys.io.File.getContent(path);
+	// 		object = Tsv.decode(content);
+	// 	} catch (e:Any) {
+	// 		// TODO better error handling
+	// 		throw e;
+	// 	}
 		
-		return content;
-	}
+	// 	return object;
+	// }
 }
