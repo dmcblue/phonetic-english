@@ -1,5 +1,6 @@
 package dmcblue.phoneticEnglish;
 
+import dmcblue.phoneticEnglish.Configuration;
 import sys.FileSystem;
 import haxe.io.Path;
 import Math;
@@ -26,6 +27,15 @@ import dmcblue.phoneticEnglish.Converter;
 // import interealmGames.opentask.ProgramInformation;
 // import interealmGames.opentask.Log;
 
+enum Type {
+	ARPA1;
+	ARPA2;
+	GA;
+	IPA;
+	PHONETIC;
+	RP;
+}
+
 /**
  * The program logic
  */
@@ -34,13 +44,13 @@ class Application
 	/**
 	 * Command line arguments for various actions
 	 */
-	static public var TYPE_IPA = "ipa";
-	static public var TYPE_RP = "rp";
-	static public var TYPE_GA = "ga";
-	static public var TYPE_PHONETIC = "ph";
-	static public var TYPE_ARPA1 = "arpa1";
-	static public var TYPE_ARPA2 = "arpa2";
-	static public var TYPES:Array<String> = [
+	static public inline final TYPE_IPA = "ipa";
+	static public inline final TYPE_RP = "rp";
+	static public inline final TYPE_GA = "ga";
+	static public inline final TYPE_PHONETIC = "ph";
+	static public inline final TYPE_ARPA1 = "arpa1";
+	static public inline final TYPE_ARPA2 = "arpa2";
+	static public var TYPES:haxe.ds.ReadOnlyArray<String> = [
 		Application.TYPE_GA,
 		Application.TYPE_IPA,
 		Application.TYPE_PHONETIC,
@@ -52,24 +62,27 @@ class Application
 	/**
 	 * Command line options
 	 */
-	static public var OPTION_CONFIG = "config";
-	static public var OPTION_CONFIG_SHORT = "c";
-	static public var OPTION_HELP = "help";
-	static public var OPTION_HELP_SHORT = "h";
-	static public var OPTION_VERSION = "version";
-	static public var OPTION_VERSION_SHORT = "v";
+	static public final OPTION_CONFIG = "config";
+	static public final OPTION_CONFIG_SHORT = "c";
+	static public final OPTION_HELP = "help";
+	static public final OPTION_HELP_SHORT = "h";
+	static public final OPTION_VERSION = "version";
+	static public final OPTION_VERSION_SHORT = "v";
 	
 	/**
 	 * Current Application Version
 	 */
 	static public var VERSION = "0.1.0";
 
+	private var configuration:Configuration;
+	private var converters:Map<Type, Map<Type, Converter>>;
+
 	public function new() 
 	{
 		try {
 			var options = CommandLine.getOptions();
 			var arguments = CommandLine.getArguments();
-			
+
 			if (options.hasShortOption(Application.OPTION_HELP_SHORT) || options.hasLongOption(Application.OPTION_HELP)) {
 				Help.display();
 				this.end();
@@ -80,64 +93,162 @@ class Application
 				this.end();
 			}
 
-			var configuration = this.getConfiguration(options);
+			this.configuration = this.getConfiguration(options);
 			
 			//arguments[0] is the PhonEng application
 			if (arguments.length != 4) {
 				throw new InvalidNumberOfParametersError(4, arguments.length);
 			}
 
-			var inputType = arguments[1];
-			var outputType = arguments[2];
+			var inputType = this.typeFromString(arguments[1]);
+			var outputType = this.typeFromString(arguments[2]);
 			var input = arguments[3];
-			var output:String = input;
+			var output:Array<String> = []; // input;
 			
-			if (Application.TYPES.indexOf(inputType) == -1) {
-				throw new InvalidTypeError(inputType);
+			if (inputType == null) {
+				throw new InvalidTypeError(arguments[1]);
 			}
 
-			if (Application.TYPES.indexOf(outputType) == -1) {
-				throw new InvalidTypeError(outputType);
+			if (outputType == null) {
+				throw new InvalidTypeError(arguments[2]);
 			}
 
-			if (inputType != Application.TYPE_IPA) {
-				// convert to IPA
-				if (inputType == Application.TYPE_GA) {
-					// convert GA to ARPA
-					// Get dictionary
-					// convert from dictionary
-					var tsv = new Tsv(['word', 'arpa']);
-					tsv.load(configuration.dictPath);
-					var converter = Converter.fromTsv(tsv, 'word', 'arpa');
-					var mid = converter.convert(input);
-					// convert ARPA to IPA
-					var tsv = new Tsv(['arpa', 'ipa']);
-					tsv.load(configuration.arpa2Path);
-					var converter = Converter.fromTsv(tsv, 'arpa', 'ipa');
-					var mid2 = "";
-					for(letter in mid.split(" ")) {
-						mid2 += converter.convert2(letter) + " ";
+			this.converters = this.buildConverters();
+			var steps = this.conversionPath(inputType, outputType);
+			var parts = input.toLowerCase().split(' ');
+			for (part in parts) {
+				var val = part.split('');
+				for(i in 1...steps.length) {
+					var from = steps[i - 1];
+					var to = steps[i];
+					var converter = this.converters.get(from).get(to);
+					if (from == Type.GA) {
+						val = converter.convert2(val.join('')).split(' ');
+					} else {
+						val = converter.convertEach(val);
 					}
-					// convert IPA to Phon
-					var tsv = new Tsv(['phon', 'ipa', 'example']);
-					tsv.load(configuration.phonPath);
-					var converter = Converter.fromTsv(tsv, 'ipa', 'phon');
-					output = "";
-					for(letter in mid2.split(" ")) {
-						output += converter.convert2(letter);
-					}
+				}
+				output.push(' ');
+
+				for(str in val) {
+					output.push(str != null ? str : '?');
 				}
 			}
 
-			// var output = input;
-			if (outputType != Application.TYPE_IPA) {
-				// convert
-			}
-
-			Sys.println(output);
+			Sys.println(output.join(''));
 		} catch (e:BaseError) {
 			this.end(e);
 		}
+	}
+
+	public function conversionPath(from: Type, to: Type): Array<Type> {
+		var intermediateSteps = switch from {
+			case Type.ARPA1:
+				switch to {
+					case Type.ARPA2: [Type.IPA];
+					case Type.GA: [Type.IPA, Type.ARPA2];
+					case Type.IPA: [];
+					case Type.PHONETIC: [Type.IPA];
+					case Type.RP: null;
+					default: null;
+				};
+			case Type.ARPA2:
+				switch to {
+					case Type.ARPA1: [Type.IPA];
+					case Type.GA: [];
+					case Type.IPA: [];
+					case Type.PHONETIC: [Type.IPA];
+					case Type.RP: null;
+					default: null;
+				};
+			case Type.GA:
+				switch to {
+					case Type.ARPA1: [Type.ARPA2, Type.IPA];
+					case Type.ARPA2: [];
+					case Type.IPA: [Type.ARPA2];
+					case Type.PHONETIC: [Type.ARPA2, Type.IPA];
+					case Type.RP: null;
+					default: null;
+				};
+			case Type.IPA:
+				switch to {
+					case Type.ARPA1: [];
+					case Type.ARPA2: [];
+					case Type.GA: [Type.ARPA2];
+					case Type.PHONETIC: [];
+					case Type.RP: null;
+					default: null;
+				};
+			case Type.PHONETIC:
+				switch to {
+					case Type.ARPA1: [Type.IPA];
+					case Type.ARPA2: [Type.IPA];
+					case Type.GA: [Type.ARPA2, Type.IPA];
+					case Type.IPA: [];
+					case Type.RP: null;
+					default: null;
+				};
+			case Type.RP:
+				switch to {
+					case Type.ARPA1: null;
+					case Type.ARPA2: null;
+					case Type.GA: null;
+					case Type.IPA: null;
+					case Type.PHONETIC: null;
+					default: null;
+				};
+			default: null;
+		}
+
+		intermediateSteps.unshift(from);
+		intermediateSteps.push(to);
+		return intermediateSteps;
+	}
+
+	public function typeFromString(str: String): Type {
+		return switch str {
+			case Application.TYPE_ARPA1: Type.ARPA1;
+			case Application.TYPE_ARPA2: Type.ARPA2;
+			case Application.TYPE_GA: Type.GA;
+			case Application.TYPE_IPA: Type.IPA;
+			case Application.TYPE_PHONETIC: Type.PHONETIC;
+			case Application.TYPE_RP: Type.RP;
+			default: null;
+		}
+	}
+
+	public function buildConverters():Map<Type, Map<Type, Converter>> {
+		var converters:Map<Type, Map<Type, Converter>> = new Map();
+
+		converters.set(Type.ARPA1, new Map());
+		converters.set(Type.ARPA2, new Map());
+		converters.set(Type.GA, new Map());
+		converters.set(Type.IPA, new Map());
+		converters.set(Type.PHONETIC, new Map());
+		converters.set(Type.RP, new Map());
+
+		var tsv = new Tsv([Application.TYPE_ARPA1, Application.TYPE_IPA]);
+		tsv.load(this.configuration.arpa1Path);
+		converters.get(Type.ARPA1).set(Type.IPA, Converter.fromTsv(tsv, Application.TYPE_ARPA1, Application.TYPE_IPA));
+		converters.get(Type.IPA).set(Type.ARPA1, Converter.fromTsv(tsv, Application.TYPE_IPA, Application.TYPE_ARPA1));
+
+		var tsv = new Tsv([Application.TYPE_ARPA2, Application.TYPE_IPA]);
+		tsv.load(this.configuration.arpa2Path);
+		converters.get(Type.ARPA2).set(Type.IPA, Converter.fromTsv(tsv, Application.TYPE_ARPA2, Application.TYPE_IPA));
+		converters.get(Type.IPA).set(Type.ARPA2, Converter.fromTsv(tsv, Application.TYPE_IPA, Application.TYPE_ARPA2));
+
+		var tsv = new Tsv([Application.TYPE_GA, Application.TYPE_ARPA2]);
+		tsv.load(this.configuration.dictPath);
+		converters.get(Type.GA).set(Type.ARPA2, Converter.fromTsv(tsv, Application.TYPE_GA, Application.TYPE_ARPA2));
+		converters.get(Type.ARPA2).set(Type.GA, Converter.fromTsv(tsv, Application.TYPE_ARPA2, Application.TYPE_GA));
+
+		var tsv = new Tsv([Application.TYPE_PHONETIC, Application.TYPE_IPA]);
+		tsv.load(this.configuration.phonPath);
+		converters.get(Type.PHONETIC).set(Type.ARPA1, Converter.fromTsv(tsv, Application.TYPE_PHONETIC, Application.TYPE_IPA));
+		converters.get(Type.IPA).set(Type.PHONETIC, Converter.fromTsv(tsv, Application.TYPE_IPA, Application.TYPE_PHONETIC));
+
+
+		return converters;
 	}
 	
 	/**

@@ -14,7 +14,7 @@ class Configuration
 	/** Version of this schema, semantic versioning */
 	public var version:String;
 
-	/** Path to the ARPAbet 1-char conversion file */
+	/** Where conversion files are found */
 	public var conversionPath:String = '';
 
 	/** Path to the ARPAbet 1-char to IPA conversion file */
