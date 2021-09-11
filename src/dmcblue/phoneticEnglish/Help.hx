@@ -22,7 +22,6 @@ Input/Output Types:
   %s - ARPAbet, 1 letter format
   %s - ARPAbet, 2 letter format
   %s - IPA format
-  %s - Received Pronunciation, a British standard for pronunciaiton
   %s - General American, a standard for pronunciaiton used in the United States
   %s - The Phonetic English spelling system
 ";
@@ -45,10 +44,9 @@ Input/Output Types:
       Application.OPTION_CONFIG,
       Application.TYPE_ARPA1,
       Application.TYPE_ARPA2,
-      Application.TYPE_GA,
       Application.TYPE_IPA,
+      Application.TYPE_GA,
       Application.TYPE_PHONETIC,
-      Application.TYPE_RP,
     ]);
 		Sys.println(helpText); // Sys not Log
 	}
