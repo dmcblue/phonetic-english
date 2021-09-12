@@ -1,5 +1,6 @@
 package dmcblue.phoneticEnglish;
 
+import haxe.io.BytesBuffer;
 import dmcblue.phoneticEnglish.Configuration;
 import sys.FileSystem;
 import haxe.io.Path;
@@ -34,6 +35,17 @@ enum Type {
 	IPA;
 	PHONETIC;
 	RP;
+}
+
+enum TextType {
+	TEXT;
+	WHITESPACE;
+}
+
+typedef TextNode =
+{
+	type:TextType,
+	text:String
 }
 
 /**
@@ -97,7 +109,12 @@ class Application
 			
 			//arguments[0] is the PhonEng application
 			if (arguments.length != 4) {
-				throw new InvalidNumberOfParametersError(4, arguments.length);
+				var stdin = Sys.stdin().readAll(32).toString();
+				if (stdin == "") {
+					throw new InvalidNumberOfParametersError(4, arguments.length);
+				}
+
+				arguments[3] = stdin;
 			}
 
 			var inputType = this.typeFromString(arguments[1]);
@@ -115,23 +132,26 @@ class Application
 
 			this.converters = this.buildConverters();
 			var steps = this.conversionPath(inputType, outputType);
-			var parts = input.toLowerCase().split(' ');
+			var parts = this.splitText(input);
 			for (part in parts) {
-				var val = part.split('');
-				for(i in 1...steps.length) {
-					var from = steps[i - 1];
-					var to = steps[i];
-					var converter = this.converters.get(from).get(to);
-					if (from == Type.GA) {
-						val = converter.convert2(val.join('')).split(' ');
-					} else {
-						val = converter.convertEach(val);
+				if(part.type == TextType.WHITESPACE) {
+					output.push(part.text);
+				} else {
+					var trans = part.text.toLowerCase().split('');
+					for(i in 1...steps.length) {
+						var from = steps[i - 1];
+						var to = steps[i];
+						var converter = this.converters.get(from).get(to);
+						if (from == Type.GA) {
+							trans = converter.convert(trans.join('')).split(' ');
+						} else {
+							trans = converter.convertEach(trans);
+						}
 					}
-				}
-				output.push(' ');
 
-				for(str in val) {
-					output.push(str != null ? str : '?');
+					for(str in trans) {
+						output.push(str != null ? str : '?');
+					}
 				}
 			}
 
@@ -316,25 +336,37 @@ class Application
 		
 		return object;
 	}
-	
-	/**
-	 * Fetches the contents of a JSON file and returns them as an object
-	 * @param	path The location of the JSON file.
-	 * @return	Dynamic Object with the contents.
-	 * @throws	JsonParsingError
-	 */
-	// public function loadTsvFile(path:String):Null<Array<Array<String>>> {
-		
-	// 	var object:Null<Array<Array<String>>> = null;
-	// 	var content:String = "";
-	// 	try {
-	// 		content = sys.io.File.getContent(path);
-	// 		object = Tsv.decode(content);
-	// 	} catch (e:Any) {
-	// 		// TODO better error handling
-	// 		throw e;
-	// 	}
-		
-	// 	return object;
-	// }
+
+	public function splitText(source:String): Array<TextNode> {
+		var textNodes: Array<TextNode> = [];
+		var whitespace = [" ", "\t", "\n"];
+		var chars:EReg = ~/[A-Z]+/i;
+		var text = "";
+		var type: TextType = null;
+		for(t in source.split('')) {
+			// var thisType = whitespace.contains(t) ? TextType.WHITESPACE : TextType.TEXT;
+			var thisType = chars.match(t) ? TextType.TEXT : TextType.WHITESPACE;
+			if (type == null) {
+				type = thisType;
+			} else if (thisType != type) {
+				textNodes.push({
+					type: type,
+					text: text
+				});
+				type = thisType;
+				text = "";
+			}
+
+			text += t;
+		}
+
+		if (text.length > 0) {
+			textNodes.push({
+				type: type,
+				text: text
+			});
+		}
+
+		return textNodes;
+	}
 }
