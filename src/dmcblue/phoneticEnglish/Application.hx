@@ -149,8 +149,12 @@ class Application
 						}
 					}
 
-					for(str in trans) {
-						output.push(str != null ? str : '?');
+					if(trans.join('') == "") {
+						output.push('?');
+					} else {
+						for(str in trans) {
+							output.push(str != null ? str : '?');
+						}
 					}
 				}
 			}
