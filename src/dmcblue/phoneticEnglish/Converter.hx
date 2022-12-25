@@ -10,10 +10,14 @@ class Converter {
 	static private function tsvToMapping(tsv:Tsv, from:String, to:String):Map<String, String> {
 		var mapping:Map<String, String> = new Map();
 		for(row in tsv.rows) {
-			mapping.set(
-				row.get(from).toLowerCase().trim(),
-				row.get(to).toLowerCase().trim()
-			);
+			if(row.get(from) != null && row.get(to) != null) {
+				mapping.set(
+					row.get(from).toLowerCase().trim(),
+					row.get(to).toLowerCase().trim()
+				);
+			} else {
+				break;
+			}
 		}
 
 		return mapping;
@@ -25,14 +29,18 @@ class Converter {
 	}
 
     public function convert(input:String): String {
-		return this.mapping.get(input);
+		if (this.mapping.exists(input)) {
+			return this.mapping.get(input);
+		} else {
+			return '�';
+		}
 	}
 
     public function convertEach(input:Array<String>): Array<String> {
 		var output: Array<String> = [];
 
 		for(str in input) {
-			output.push(this.mapping.get(str));
+			output.push(this.convert(str));
 		}
 
 		return output;

@@ -1,6 +1,6 @@
 package dmcblue.phoneticEnglish;
 
-import thx.csv.Tsv in TsvParser;
+import haxe.io.Eof;
 
 class Tsv {
 	public var headers:Array<String>;
@@ -18,12 +18,16 @@ class Tsv {
 	 * @throws	JsonParsingError
 	 */
 	public function load(path:String):Void {
-		var object:Null<Array<Array<String>>> = null;
+		var object:Array<Array<String>> = [];
 		var content:String = "";
 		try {
-			content = sys.io.File.getContent(path);
-			//trace(rows.length);
-			//object = TsvParser.decode(content);
+			var fin = sys.io.File.read(path, false);
+			while(true) {
+				var line = fin.readLine();
+				object.push(line.split("\t"));
+			}
+		} catch(e:Eof) {
+
 		} catch (e:Any) {
 			// TODO better error handling
 			throw e;
@@ -33,7 +37,6 @@ class Tsv {
 			this.headers = object.shift();
 		}
 
-		object = content.split("\n").map(function(row:String) {return row.split("\t");});
 		this.rows = [];
 		for(tsvRow in object) {
 			var row: Map<String, String> = new Map();

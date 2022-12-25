@@ -76,21 +76,6 @@
 			"hxcpp"
 		]
 	},{
-		"name": "init:libs:thx.csv",
-		"description": "Installs package thx.csv",
-		"groups": [{
-			"name": "init",
-			"rank": 5
-		}, {
-			"name": "init:lib",
-			"rank": 3
-		}],
-		"command": "haxelib",
-		"arguments": [
-			"install",
-			"thx.csv"
-		]
-	},{
 		"name": "init:libs:utest",
 		"description": "Installs package utest",
 		"groups": [{
@@ -116,7 +101,6 @@
 		}],
 		"command": "haxe",
 		"arguments": [
-			"-lib", "thx.csv",
 			"-cp", "src",
 			"-cp", "common/src",
 			"--cpp", "bin/cpp",
@@ -163,6 +147,7 @@
 		"arguments": [
             "-lib", "utest",
 			"-cp", "src",
+			"-cp", "common/src",
 			"-main", "dmcblue.phoneticEnglish.Test",
 			"--interp"
 		]

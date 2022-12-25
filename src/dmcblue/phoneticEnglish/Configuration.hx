@@ -1,5 +1,6 @@
 package dmcblue.phoneticEnglish;
 
+import haxe.io.Path;
 import Map in Dictionary;
 
 import interealmGames.common.dictionary.DictionaryTools;
@@ -11,6 +12,10 @@ import dmcblue.phoneticEnglish.ConfigurationObject;
  */
 class Configuration
 {
+	static public function homeFolder() {
+		// https://stackoverflow.com/a/60684961/2329474
+		return Sys.getEnv(if (Sys.systemName() == "Windows") "UserProfile" else "HOME");
+	}
 	/** Version of this schema, semantic versioning */
 	public var version:String;
 
@@ -31,41 +36,16 @@ class Configuration
 		
 	public function new(configurationObject:ConfigurationObject) 
 	{
-		// ConfigurationObjectValidator.validate(configurationObject);
 		this.version = configurationObject.version;
 		
 		this.conversionPath = Reflect.hasField(configurationObject, 'conversionPath')
 			? configurationObject.conversionPath
-			: '~/.phoneng/'; // @TODO Make OS agnostic
+			: Path.addTrailingSlash(Path.join([Configuration.homeFolder(), '.phoneng']));
 
-		// if (Reflect.hasField(configurationObject, 'arpa1Path')) {
-		// 	this.arpa1Path = configurationObject.arpa1Path;
-		// } else {
-		// 	var arpa1Filename = Reflect.hasField(configurationObject, 'arpa1Name')
-		// 		? configurationObject.arpa1Name
-		// 		: 'arpa1.tsv';
-		// 	this.arpa1Path = this.conversionPath + arpa1Filename;
-		// }
 		this.arpa1Path = this.getPath(configurationObject, 'arpa1');
-	
-		// if (Reflect.hasField(configurationObject, 'arpa2Path')) {
-		// 	this.arpa2Path = configurationObject.arpa2Path;
-		// } else {
-		// 	var arpa2Filename = Reflect.hasField(configurationObject, 'arpa1Name')
-		// 		? configurationObject.arpa2Name
-		// 		: 'arpa2.tsv';
-		// 	this.arpa2Path = this.conversionPath + arpa2Filename;
-		// }
+
 		this.arpa2Path = this.getPath(configurationObject, 'arpa2');
-	
-		// if (Reflect.hasField(configurationObject, 'phonPath')) {
-		// 	this.phonPath = configurationObject.phonPath;
-		// } else {
-		// 	var phonFilename = Reflect.hasField(configurationObject, 'phonName')
-		// 		? configurationObject.phonName
-		// 		: 'phon.tsv';
-		// 	this.phonPath = this.conversionPath + phonFilename;
-		// }
+
 		this.phonPath = this.getPath(configurationObject, 'phon');
 		this.dictPath = this.getPath(configurationObject, 'dict');
 	}
@@ -79,7 +59,6 @@ class Configuration
 	):String {
 		var path:String = "";
 		if (Reflect.hasField(configurationObject, '${prefix}Path')) {
-			// path = configurationObject.phonPath;
 			path = Reflect.getProperty(configurationObject, '${prefix}Path');
 		} else {
 			var filename = Reflect.hasField(configurationObject, '${prefix}Name')
@@ -87,9 +66,7 @@ class Configuration
 				: '${prefix}.tsv';
 			path = this.conversionPath + filename;
 		}
-		// trace(path);
-		// trace(configurationObject);
-		// trace('${prefix}Path');
+
 		return path;
 	}
 }
