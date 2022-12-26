@@ -3,7 +3,7 @@ Attempt at a phonetically consistent English orthography
 
 ## Setup
 
-Download a binary from the [Releases](releases) or build the tool from scratch using the [Development](#development) section.
+Download a binary from the [Releases](https://github.com/dmcblue/phonetic-english/releases) or build the tool from scratch using the [Development](#development) section.
 
 Once you can use the program, run the `init` command:
 ```shell
