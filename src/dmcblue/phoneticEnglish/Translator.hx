@@ -1,7 +1,10 @@
 package dmcblue.phoneticEnglish;
 
+import dmcblue.phoneticEnglish.Converter;
 import dmcblue.phoneticEnglish.Configuration;
 import dmcblue.phoneticEnglish.Configuration;
+
+using StringTools;
 
 typedef TextNode = {
 	type:TextType,
@@ -116,11 +119,14 @@ class Translator {
 	public function splitText(source:String): Array<TextNode> {
 		var textNodes: Array<TextNode> = [];
 		var whitespace = [" ", "\t", "\n"];
-		var chars:EReg = ~/[A-Z]+/i;
+		var alpha:EReg = ~/[A-Z]+/i;
 		var text = "";
 		var type: TextType = null;
-		for(t in source.split('')) {
-			var thisType = chars.match(t) ? TextType.TEXT : TextType.WHITESPACE;
+		var chars = source.split('');
+		var i = 0;
+		while(i < chars.length) {
+			var t = chars[i];
+			var thisType = alpha.match(t) ? TextType.TEXT : TextType.WHITESPACE;
 			if (type == null) {
 				type = thisType;
 			} else if (thisType != type) {
@@ -133,6 +139,13 @@ class Translator {
 			}
 
 			text += t;
+
+			// contractions
+			if ((chars[i+1] == "'" || chars[i+1] == "’") && alpha.match(chars[i+2])) {
+				text += chars[i+1] + chars[i+2];
+				i += 2;
+			}
+			i++;
 		}
 
 		if (text.length > 0) {
@@ -154,13 +167,23 @@ class Translator {
 			if(part.type == TextType.WHITESPACE) {
 				output.push(part.text);
 			} else {
-				var trans = part.text.toLowerCase().split('');
+				var trans = part.text.toLowerCase().replace('’', "'").split('');
 				for(i in 1...steps.length) {
 					var from = steps[i - 1];
 					var to = steps[i];
 					var converter = converters.get(from).get(to);
 					if (from == ScriptType.GA) {
-						trans = converter.convert(trans.join('')).split(' ');
+						var str = trans.join('');
+						var t = converter.convert(str).split(' ');
+						// if can't find word starting with negation (un), search by non-negation
+						if (t.length == 1 && t[0] == Converter.NULL && str.substr(0, 2) == 'un') {
+							t = converter.convert(str.substr(2)).split(' ');
+							if (!(t.length == 1 && t[0] == Converter.NULL)) {
+								t = ['ah', 'n'].concat(t);
+							}
+						}
+
+						trans = t;
 					} else {
 						trans = converter.convertEach(trans);
 					}

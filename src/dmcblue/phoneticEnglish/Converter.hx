@@ -3,6 +3,9 @@ package dmcblue.phoneticEnglish;
 using StringTools;
 
 class Converter {
+	static public var NULL = '�';
+	static public var PUNCTUATION = ["'", "’"];
+
 	static public function fromTsv(tsv:Tsv, from:String, to:String) {
 		return new Converter(Converter.tsvToMapping(tsv, from, to));
 	}
@@ -31,8 +34,10 @@ class Converter {
     public function convert(input:String): String {
 		if (this.mapping.exists(input)) {
 			return this.mapping.get(input);
+		} else if (Converter.PUNCTUATION.contains(input)) {
+			return input;
 		} else {
-			return '�';
+			return Converter.NULL;
 		}
 	}
 
