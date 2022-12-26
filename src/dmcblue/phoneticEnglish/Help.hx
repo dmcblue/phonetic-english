@@ -24,6 +24,8 @@ Input/Output Types:
   %s - IPA format
   %s - General American, a standard for pronunciaiton used in the United States
   %s - The Phonetic English spelling system
+
+%s init: Creates a base config and download the necessary dictionaries
 ";
 	
 	static public function display() {
@@ -47,6 +49,7 @@ Input/Output Types:
       Application.TYPE_IPA,
       Application.TYPE_GA,
       Application.TYPE_PHONETIC,
+			executableName
     ]);
 		Sys.println(helpText); // Sys not Log
 	}

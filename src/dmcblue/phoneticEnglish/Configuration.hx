@@ -12,10 +12,30 @@ import dmcblue.phoneticEnglish.ConfigurationObject;
  */
 class Configuration
 {
+	static private var DEFAULT_CONFIG_PATH:String = null;
+	static private var DEFAULT_MAPPING_PATH:String = null;
+
+	static public function defaultConfigurationPath():String {
+		if(Configuration.DEFAULT_CONFIG_PATH == null) {
+			Configuration.DEFAULT_CONFIG_PATH = Path.join([Configuration.homeFolder(), '.phoneng.json']);
+		}
+
+		return Configuration.DEFAULT_CONFIG_PATH;
+	}
+
+	static public function defaultMappingPath():String {
+		if(Configuration.DEFAULT_MAPPING_PATH == null) {
+			Configuration.DEFAULT_MAPPING_PATH = Path.addTrailingSlash(Path.join([Configuration.homeFolder(), '.phoneng']));
+		}
+
+		return Configuration.DEFAULT_MAPPING_PATH;
+	}
+
 	static public function homeFolder() {
 		// https://stackoverflow.com/a/60684961/2329474
 		return Sys.getEnv(if (Sys.systemName() == "Windows") "UserProfile" else "HOME");
 	}
+
 	/** Version of this schema, semantic versioning */
 	public var version:String;
 
@@ -40,12 +60,10 @@ class Configuration
 		
 		this.conversionPath = Reflect.hasField(configurationObject, 'conversionPath')
 			? configurationObject.conversionPath
-			: Path.addTrailingSlash(Path.join([Configuration.homeFolder(), '.phoneng']));
+			: Configuration.defaultMappingPath();
 
 		this.arpa1Path = this.getPath(configurationObject, 'arpa1');
-
 		this.arpa2Path = this.getPath(configurationObject, 'arpa2');
-
 		this.phonPath = this.getPath(configurationObject, 'phon');
 		this.dictPath = this.getPath(configurationObject, 'dict');
 	}

@@ -1,12 +1,39 @@
 # phonetic-english
-Attempt at a phonetically consisten English orthography
+Attempt at a phonetically consistent English orthography
+
+## Setup
+
+Download a binary from the [Releases](releases) or build the tool from scratch using the [Development](#development) section.
+
+Once you can use the program, run the `init` command:
+```shell
+phoneng init
+```
+
+## Usage
+
+The basic usage will look like:
+```shell
+phoneng ga ph "text to translate"
+```
+The parts meaning:
+```
+phoneng - the binary
+ga - input is General American english
+ph - output should be Phonetic English
+```
+
+The input can be piped through `stdin` so one can translate large documents via:
+```shell
+cat little_women.txt | phoneng ga ph > little_women_phonetic.txt
+```
 
 ## Goals
 
 - Create a useful system of spelling English that communicates phonetics clearly.
 - Create executables that convert between various English spelling standards and new phonetic version.
 
-## Alphabet / Orthography Goals
+### Alphabet / Orthography Goals
 
 - Be phonetically consistentet, not necessarily directly phonetic.
 
@@ -15,7 +42,7 @@ For example, `bit` and `bite` represent a consistent way of communicated short a
 - Attempt to be fairly close to current spelling standards.
 - No added characters or accents in order to make typing easy. Which makes adoption easy. No new keyboards, fonts, programs, etc.
 
-## Which English
+### Which English
 
 What makes this project useful and at the same time so difficult is that there is no 'standard' for English.
 That is not to say English would benefit from one.
@@ -33,7 +60,7 @@ GA maps well enough to [Received Pronunciation](200~https://en.wikipedia.org/wik
 
 One major difference between GA and RP that is not easily addressed is the [`ʍ` sound](https://en.wikipedia.org/wiki/Voiceless_labialized_velar_approximant) which is no longer pronounced by most GA speakers. For consistency's sake, this sound should be preserved in the spelling where it occurs in RP.
 
-## Why This Standard
+### Why This Standard
 
 There have been [many attempts](https://en.wikipedia.org/wiki/English-language_spelling_reform) to reform spelling in English,
 none have been very successful, for a variety of reasons:
@@ -43,7 +70,7 @@ none have been very successful, for a variety of reasons:
 
 There is no claim this attempt at a standard will overcome all barriers. It merely will attempt to lessen all those barriers to the maximum extent possible.
 
-## Why Spelling Refom
+### Why Spelling Refom
 
 English speakers are especially known for mangling the names and languages of other peoples.
 The latent (and not so latent) xenophobia that dominates many English speaking countries aside,
@@ -59,7 +86,7 @@ Many spelling reforms focusing on replacing redundant sounds, like `c` with `k` 
 replacement strategies make English orthography more phonetically 'consistent', as in giving the speaker/reader a better
 expectation of how a word should be said.
 
-## What Is Not Addressed
+### What Is Not Addressed
 
 The most obvious item skipped by this project is pronunciations outside of English.
 This project does not propose itself to be a stand-in for IPA.
@@ -71,6 +98,51 @@ Instead, it is indirectly addressed by making spelling consistent.
 Knowing a linguistic context is English should be enough to translate phonology easily and quickly.
 
 http://svn.code.sf.net/p/cmusphinx/code/trunk/cmudict/sphinxdict/cmudict.0.7a_SPHINX_40
+
+### Example
+
+The first few paragraphs of [Little Women](https://gutenberg.org/ebooks/514):
+```
+“Christmas won’t be Christmas without any presents,” grumbled Jo, lying
+on the rug.
+
+“It’s so dreadful to be poor!” sighed Meg, looking down at her old
+dress.
+
+“I don’t think it’s fair for some girls to have plenty of pretty
+things, and other girls nothing at all,” added little Amy, with an
+injured sniff.
+
+“We’ve got Father and Mother, and each other,” said Beth contentedly
+from her corner.
+
+The four young faces on which the firelight shone brightened at the
+cheerful words, but darkened again as Jo said sadly, “We haven’t got
+Father, and shall not have him for a long time.” She didn’t say
+“perhaps never,” but each silently added it, thinking of Father far
+away, where the fighting was.
+```
+in phonetic spelling:
+```
+“krismus woxnt bex krismus withowt enex prezunts,” grumbuld jox, lixing
+axn dhu rug.
+
+“it's sox dredful tux bex puxr!” sixd meg, loking down at hir oxld
+dres.
+
+“ix doxnt thingk it's fer faxr sum girlz tux hav plentex uv pritex
+thingz, und udhir girlz nuthing at axl,” adud litul aymex, widh an
+injird snif.
+
+“wexv gaxt faxdhir und mudhir, und exc udhir,” sed beth kuntentudlex
+frum hir kaxrnir.
+
+dhu faxr yung faysuz axn wic dhu fixrlixt shoxn brixtund at dhu
+cirful wirdz, but daxrkund ugen az jox sed sadlex, “wex havunt gaxt
+faxdhir, und shal naxt hav him faxr u laxng tixm.” shex didunt say
+“pirhaps nevir,” but exc sixluntlex adud it, thingking uv faxdhir faxr
+uway, wer dhu fixting waxz.
+```
 
 ## Development
 

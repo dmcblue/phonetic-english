@@ -1,11 +1,13 @@
 package dmcblue.phoneticEnglish;
 
+import haxe.Json;
 import haxe.io.BytesBuffer;
-import dmcblue.phoneticEnglish.Configuration;
 import sys.FileSystem;
 import haxe.io.Path;
 import Math;
 import interealmGames.common.commandLine.OptionSet;
+import dmcblue.phoneticEnglish.errors.BaseError;
+import dmcblue.phoneticEnglish.errors.FileUnableToSave;
 import dmcblue.phoneticEnglish.errors.InvalidTypeError;
 import interealmGames.common.commandLine.CommandLine;
 import dmcblue.phoneticEnglish.Configuration;
@@ -49,6 +51,8 @@ class Application
 	static public final OPTION_HELP_SHORT = "h";
 	static public final OPTION_VERSION = "version";
 	static public final OPTION_VERSION_SHORT = "v";
+
+	static public final COMMAND_INIT = "init";
 	
 	/**
 	 * Current Application Version
@@ -75,34 +79,39 @@ class Application
 				this.end();
 			}
 
-			this.configuration = this.getConfiguration(options);
-			
 			//arguments[0] is the PhonEng application
-			if (arguments.length != 4) {
-				var stdin = Sys.stdin().readAll(32).toString();
-				if (stdin == "") {
-					throw new InvalidNumberOfParametersError(4, arguments.length);
+			if (arguments.length == 2 && arguments[1] == Application.COMMAND_INIT) {
+				this.init();
+				this.end();
+			} else {
+				this.configuration = this.getConfiguration(options);
+
+				if (arguments.length != 4) {
+					var stdin = Sys.stdin().readAll(32).toString();
+					if (stdin == "") {
+						throw new InvalidNumberOfParametersError(4, arguments.length);
+					}
+
+					arguments[3] = stdin;
 				}
 
-				arguments[3] = stdin;
+				var inputType = this.typeFromString(arguments[1]);
+				var outputType = this.typeFromString(arguments[2]);
+				var input = arguments[3];
+
+				if (inputType == null) {
+					throw new InvalidTypeError(arguments[1]);
+				}
+
+				if (outputType == null) {
+					throw new InvalidTypeError(arguments[2]);
+				}
+
+				this.translator = new Translator(this.configuration);
+				var output = this.translator.translate(input, inputType, outputType);
+
+				Sys.println(output);
 			}
-
-			var inputType = this.typeFromString(arguments[1]);
-			var outputType = this.typeFromString(arguments[2]);
-			var input = arguments[3];
-			
-			if (inputType == null) {
-				throw new InvalidTypeError(arguments[1]);
-			}
-
-			if (outputType == null) {
-				throw new InvalidTypeError(arguments[2]);
-			}
-
-			this.translator = new Translator(this.configuration);
-			var output = this.translator.translate(input, inputType, outputType);
-
-			Sys.println(output);
 		} catch (e:BaseError) {
 			this.end(e);
 		}
@@ -142,7 +151,7 @@ class Application
 	 * @param	options The options from the command line.
 	 */
 	public function getConfiguration(options:OptionSet):Configuration {
-		var configurationPath = Path.join([Configuration.homeFolder(), '.phoneng.json']);
+		var configurationPath = Configuration.defaultConfigurationPath();
 
 		if (options.hasShortOption(Application.OPTION_CONFIG_SHORT) || options.hasLongOption(Application.OPTION_CONFIG)) {
 			if (options.hasShortOption(Application.OPTION_CONFIG_SHORT) && options.getShortValues(Application.OPTION_CONFIG_SHORT).length > 0) {
@@ -162,6 +171,62 @@ class Application
 		var configuration:Configuration = new Configuration(configurationObject);
 
 		return configuration;
+	}
+
+	public function init() {
+		Sys.println('This operation requires "curl"');
+		var configurationPath = Configuration.defaultConfigurationPath();
+		var mappingPath = Configuration.defaultMappingPath();
+		var baseConfig:ConfigurationObject = {
+			version: Application.VERSION,
+			conversionPath: mappingPath
+		};
+		if(!FileSystem.exists(configurationPath)) {
+			Sys.println('Creating file "$configurationPath".');
+			var contents = Json.stringify(baseConfig);
+			try {
+				sys.io.File.saveContent(configurationPath, contents);
+			} catch (e:Any) {
+				this.end(new FileUnableToSave(configurationPath));
+			}
+		} else {
+			Sys.println('File "$configurationPath" already exists.');
+		}
+
+		if(FileSystem.exists(mappingPath)) {
+			if(!FileSystem.isDirectory(mappingPath)) {
+				this.end(new BaseError('NOT_A_DIRECTORY', '"$mappingPath" is not a directroy'));
+			} else {
+				Sys.println('Directory "$mappingPath" already exists.');
+			}
+		} else {
+			Sys.println('Creating directory "$mappingPath".');
+			FileSystem.createDirectory(mappingPath);
+		}
+
+		var config:Configuration = new Configuration(baseConfig);
+		var paths = [
+			config.arpa1Path,
+			config.arpa2Path,
+			config.dictPath,
+			config.phonPath
+		];
+		for(path in paths) {
+			if(FileSystem.exists(path)) {
+				Sys.println('File "$path" already exists.');
+			} else {
+				Sys.println('File "$path" does not exist.');
+				var f = new Path(path);
+				var displayname = '${f.file}.${f.ext}';
+				var remote = 'https://raw.githubusercontent.com/dmcblue/phonetic-english/main/mappings/$displayname';
+				Sys.println('Downloading $displayname');
+				this.downloadFile(remote, path);
+			}
+		}
+	}
+
+	public function downloadFile(remoteName, localName) {
+		Sys.command('curl', ['-LJ', '-o', localName, remoteName]);
 	}
 	
 	/**
